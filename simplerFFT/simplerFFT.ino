@@ -1,4 +1,22 @@
 #include <fix_fft.h>
+#include <Adafruit_NeoPixel.h>
+#include <avr/power.h>
+
+#define PIN 6
+
+const int SAMPLE_WINDOW = 30; // Sample window width in mS (50 mS = 20Hz)
+const int NUMBER_OF_LEDS = 60;
+
+// Parameter 1 = number of pixels in strip
+// Parameter 2 = Arduino pin number (most are valid)
+// Parameter 3 = pixel type flags, add together as needed:
+//   NEO_KHZ800  800 KHz bitstream (most NeoPixel products w/WS2812 LEDs)
+//   NEO_KHZ400  400 KHz (classic 'v1' (not v2) FLORA pixels, WS2811 drivers)
+//   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
+//   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUMBER_OF_LEDS, PIN, NEO_GRB + NEO_KHZ800);
+
+const uint32_t BLACK = strip.Color(0, 0, 0);
 
 char im[128];
 char data[128]; 
@@ -6,6 +24,8 @@ char data[128];
 void setup()
 {
   //Serial.begin(9600);
+  strip.begin();
+  strip.show(); // all pixels start off
 }
 
 void loop()

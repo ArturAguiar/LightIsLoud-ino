@@ -28,7 +28,7 @@ uint16_t stackRemaining = NUMBER_OF_LEDS;
 
 void setup() {
   strip.begin();
-  strip.setBrightness(200);
+  strip.setBrightness(60);
   strip.show(); // Initialize all pixels to 'off'
   
   //Serial.begin(9600);
@@ -73,7 +73,7 @@ void loop()
   
   //showSoundLevel(peakToPeak, strip.Color(34, 150, 72));
   //amplitudeToBrightness(peakToPeak, strip.Color(34, 150, 72));
-
+  //showSoundLevel(peakToPeak, strip.Color(34, 150, 72));
   strip.show();
 
   
@@ -121,7 +121,7 @@ void runTheCourse(unsigned int peakToPeak, uint32_t color)
       
       if (i + 1 < NUMBER_OF_LEDS)
       {
-        strip.setPixelColor(i + 1, thisColor);
+        strip.setPixelColor(i + 1, color);
       }
     }
   }
