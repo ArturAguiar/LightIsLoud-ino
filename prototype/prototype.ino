@@ -28,26 +28,14 @@ uint16_t stackRemaining = NUMBER_OF_LEDS;
 
 void setup() {
   strip.begin();
+  strip.setBrightness(200);
   strip.show(); // Initialize all pixels to 'off'
   
-  Serial.begin(9600);
+  //Serial.begin(9600);
 }
 
-void loop() {
-  /*
-  // Some example procedures showing how to display to the pixels:
-  colorWipe(strip.Color(255, 0, 0), 50); // Red
-  colorWipe(strip.Color(0, 255, 0), 50); // Green
-  colorWipe(strip.Color(0, 0, 255), 50); // Blue
-  // Send a theater pixel chase in...
-  theaterChase(strip.Color(127, 127, 127), 50); // White
-  theaterChase(strip.Color(127,   0,   0), 50); // Red
-  theaterChase(strip.Color(  0,   0, 127), 50); // Blue
-
-  rainbow(20);
-  rainbowCycle(20);
-  theaterChaseRainbow(50);*/
-  
+void loop() 
+{  
   unsigned long startMillis = millis();  // Start of sample window
   unsigned int peakToPeak = 0;  // peak-to-peak level
 
@@ -75,31 +63,27 @@ void loop() {
 
   // multiply peakToPeak by something > 1 to make it more sensitive to volume.
   //int displayPeak = map(peakToPeak * 16, 0, 1023, 0, NUMBER_OF_LEDS);
-  //int displayPeak = map(constrain(peakToPeak * 4, 0, 1023), 0, 1023, 0, NUMBER_OF_LEDS);
+  //int displayPeak = map(constrain(peakToPeak * 2, 0, 1023), 0, 1023, 0, NUMBER_OF_LEDS);
   
-  int displayPeak = map(constrain(peakToPeak * 4, 0, 1023), 0, 1023, 0, 100);
+  //int displayPeak = map(constrain(peakToPeak * 4, 0, 1023), 0, 1023, 0, 100);
   
-  if (displayPeak > 60)
-  {
-    Serial.println("PEAK");
-    strip.setPixelColor(0, strip.Color(34, 150, 72));
-    strip.show();
-  }
-  
-  runTheCourse();
-  
-  strip.show();
+  runTheCourse(peakToPeak, strip.Color(34, 150, 72));
   
   //runTheCourseStack(strip.Color(34, 150, 72));
   
-  //showSoundLevel(displayPeak);
+  //showSoundLevel(peakToPeak, strip.Color(34, 150, 72));
+  //amplitudeToBrightness(peakToPeak, strip.Color(34, 150, 72));
+
+  strip.show();
+
+  
 }
 
-/*void showSoundLevel(int displayPeak)
+void showSoundLevel(unsigned int peakToPeak, uint32_t color)
 {
-  int i;
-
-  for(i = 0; i < NUMBER_OF_LEDS; i++) 
+  int displayPeak = map(constrain(peakToPeak * 4, 0, 1023), 0, 1023, 0, NUMBER_OF_LEDS);
+  
+  for(int i = 0; i < NUMBER_OF_LEDS; i++) 
   {
     if (i >= displayPeak)
     {
@@ -107,15 +91,23 @@ void loop() {
     }
     else
     {
-      strip.setPixelColor(NUMBER_OF_LEDS - i - 1, COLOR);
+      strip.setPixelColor(NUMBER_OF_LEDS - i - 1, color);
     }    
   }
   
   strip.show();              // Refresh LED states
-}*/
+}
 
-void runTheCourse()
+void runTheCourse(unsigned int peakToPeak, uint32_t color)
 {  
+  int displayPeak = map(constrain(peakToPeak * 4, 0, 1023), 0, 1023, 0, 100);
+  
+  if (displayPeak > 50)
+  {
+    strip.setPixelColor(0, color);
+    strip.show();
+  }
+  
   for(int16_t i = NUMBER_OF_LEDS; i >= 0; i--) 
   {
     uint32_t thisColor = strip.getPixelColor(i);
@@ -139,13 +131,13 @@ void runTheCourseStack(uint32_t color)
 {  
   for(uint16_t i = 0; i < stackRemaining; i++) 
   {
-     if (i > 0)
-     {
-       strip.setPixelColor(i - 1, BLACK);
-     }
-     strip.setPixelColor(i, color);
-     strip.show();
-     delay(20);
+    if (i > 0)
+    {
+     strip.setPixelColor(i - 1, BLACK);
+    }
+    strip.setPixelColor(i, color);
+    strip.show();
+    delay(20);
   } 
   
   if (stackRemaining == 0)
@@ -158,3 +150,23 @@ void runTheCourseStack(uint32_t color)
   }
 }
 
+void amplitudeToBrightness(unsigned int peakToPeak, uint32_t color)
+{
+  if (peakToPeak < 50)
+  {
+    strip.clear();
+    return;
+  }
+
+  int displayPeak = map(constrain(peakToPeak, 0, 1023), 0, 1023, 0, 255);
+
+  //uint32_t brightnessAdjustedColor = strip.Color(map(color.red, 0, 255, 0, displayPeak),
+  //                                               map(color.green, 0, 255, 0, displayPeak),
+  //                                               map(color.blue, 0, 255, 0, displayPeak));
+
+  for(int i = 0; i < NUMBER_OF_LEDS; i++) 
+  {
+    strip.setPixelColor(i, color);
+    strip.setBrightness(displayPeak);
+  }
+}

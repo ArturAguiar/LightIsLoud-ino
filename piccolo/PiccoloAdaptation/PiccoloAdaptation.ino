@@ -149,7 +149,7 @@ void setup() {
   }
 
   //matrix.begin(0x70);
-  Serial.begin(9600);
+  //Serial.begin(9600);
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
 
@@ -188,12 +188,17 @@ void loop() {
   }
 
   // Fill background w/colors, then idle parts of columns will erase
-  setStripColorRange(0, 3, RED); //matrix.fillRect(0, 0, 8, 3, LED_RED);    // Upper section
-  setStripColorRange(2, 4, YELLOW);//matrix.fillRect(0, 3, 8, 2, LED_YELLOW); // Mid
-  setStripColorRange(4, 8, GREEN);//matrix.fillRect(0, 5, 8, 3, LED_GREEN);  // Lower section
+  //setStripColorRange(x*8, 3, RED); //matrix.fillRect(0, 0, 8, 3, LED_RED);    // Upper section
+  //setStripColorRange(x*8 + 2, 4, YELLOW);//matrix.fillRect(0, 3, 8, 2, LED_YELLOW); // Mid
+  //setStripColorRange(x*8 + 4, 8, GREEN);//matrix.fillRect(0, 5, 8, 3, LED_GREEN);  // Lower section
 
   // Downsample spectrum output to 8 columns:
-  for(x = 4; x < 5; x++) { //for(x = 0; x < 8; x++) {
+  for(x = 0; x < 8; x++) {
+    // Fill background w/colors, then idle parts of columns will erase
+    setStripColorRange(x * 8, x * 8 + 3, RED); //matrix.fillRect(0, 0, 8, 3, LED_RED);    // Upper section
+    setStripColorRange(x * 8 + 2, x * 8 + 4, YELLOW);//matrix.fillRect(0, 3, 8, 2, LED_YELLOW); // Mid
+    setStripColorRange(x * 8 + 4, x * 8 + 8, GREEN);//matrix.fillRect(0, 5, 8, 3, LED_GREEN);  // Lower section
+
     data   = (uint8_t *)pgm_read_word(&colData[x]);
     nBins  = pgm_read_byte(&data[0]) + 2;
     binNum = pgm_read_byte(&data[1]);
@@ -219,8 +224,6 @@ void loop() {
     level = 10L * (col[x][colCount] - minLvlAvg[x]) /
       (long)(maxLvlAvg[x] - minLvlAvg[x]);
 
-    Serial.println(level);
-
     // Clip output and convert to byte:
     if(level < 0L)      c = 0;
     else if(level > 10) c = 10; // Allow dot to go a couple pixels off top
@@ -233,15 +236,16 @@ void loop() {
       strip.clear(); //matrix.drawLine(x, 0, x, 7, LED_OFF);
       continue;
     } else if(c < 8) { // Partial column?
-      setStripColorRange(0, 7 - c, BLACK); //matrix.drawLine(x, 0, x, 7 - c, LED_OFF);
+      setStripColorRange(x * 8, x * 8 + 7 - c, BLACK); //matrix.drawLine(x, 0, x, 7 - c, LED_OFF);
     }
 
+    /*
     // The 'peak' dot color varies, but doesn't necessarily match
     // the three screen regions...yellow has a little extra influence.
     y = 8 - peak[x];
-    if(y < 2)      strip.setPixelColor(y, RED); //matrix.drawPixel(x, y, LED_RED);
-    else if(y < 6) strip.setPixelColor(y, YELLOW); //matrix.drawPixel(x, y, LED_YELLOW);
-    else           strip.setPixelColor(y, GREEN); //matrix.drawPixel(x, y, LED_GREEN);
+    if(y < 2)      strip.setPixelColor(x * 8 + y, RED); //matrix.drawPixel(x, y, LED_RED);
+    else if(y < 6) strip.setPixelColor(x * 8 + y, YELLOW); //matrix.drawPixel(x, y, LED_YELLOW);
+    else           strip.setPixelColor(x * 8 + y, GREEN); //matrix.drawPixel(x, y, LED_GREEN);*/
   }
 
   //matrix.writeDisplay();
