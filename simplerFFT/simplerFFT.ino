@@ -19,7 +19,7 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUMBER_OF_LEDS, PIN, NEO_GRB + NEO_K
 const uint32_t BLACK = strip.Color(0, 0, 0);
 
 char im[128];
-char data[128]; 
+char data[128];
 
 void setup()
 {
@@ -33,7 +33,7 @@ void loop()
  int static i = 0;
  static long tt;
  int val;
-  
+
   if (millis() > tt)
   {
      if (i < 128)
@@ -42,8 +42,8 @@ void loop()
        //Serial.println(val);
        data[i] = val / 4 - 128;
        im[i] = 0;
-       i++;   
-       
+       i++;
+
      }
      else
      {
@@ -52,14 +52,30 @@ void loop()
 
        //Serial.print("[ ");
        // I am only interessted in the absolute value of the transformation
-       for (i = 0; i < 64; i++)
+       uint16_t red = 0;
+       uint16_t green = 0;
+       uint16_t blue = 0;
+       for (i = 0; i < 60; i++)
        {
-          data[i] = sqrt(data[i] * data[i] + im[i] * im[i]); 
+          data[i] = sqrt(data[i] * data[i] + im[i] * im[i]);
+          if (i < 20){
+            red += data[i];
+          }
+          else if(i < 40){
+            green += data[i];
+          }
+          else {
+            blue += data[i];
+          }
           //Serial.print((int8_t)data[i]);
           //Serial.print(" ");
        }
+       red /= 2;
+       green /= 2;
+       blue /= 2;
+       uint32_t color = strip.Color(red, green, blue)
        //Serial.println("]");
-       
+
        //do something with the data values 1..64 and ignore im
      }
 
