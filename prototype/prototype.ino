@@ -75,8 +75,6 @@ void loop()
   //amplitudeToBrightness(peakToPeak, strip.Color(34, 150, 72));
   //showSoundLevel(peakToPeak, strip.Color(34, 150, 72));
   strip.show();
-
-  
 }
 
 void showSoundLevel(unsigned int peakToPeak, uint32_t color)
