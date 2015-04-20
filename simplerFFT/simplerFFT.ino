@@ -3,6 +3,7 @@
 #include <avr/power.h>
 
 #define PIN 6
+#define MINBAND 1
 
 const int SAMPLE_WINDOW = 30; // Sample window width in mS (50 mS = 20Hz)
 const int NUMBER_OF_LEDS = 60;
@@ -17,76 +18,108 @@ const int NUMBER_OF_LEDS = 60;
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUMBER_OF_LEDS, PIN, NEO_GRB + NEO_KHZ800);
 
 const uint32_t BLACK = strip.Color(0, 0, 0);
+const double LOG2INV = 1/log(2);
 
 char im[128];
 char data[128];
+uint8_t min_data[64];
+
 
 void setup()
 {
-  //Serial.begin(9600);
+  Serial.begin(9600);
   strip.begin();
-  //strip.setBrightness(60);
+  strip.setBrightness(60);
   strip.show(); // all pixels start off
+  int i = 0;
+  int j = 0;
+  int val;
+
+  for (; j < 50; ++j) {
+    for(; i < 129; ++i) {
+      if (i < 128) {
+        val = analogRead(0);
+        //Serial.println(val);
+        data[i] = val / 4 - 128;
+        im[i] = 0;
+        i++;
+
+      }
+      else {
+        fix_fft(data, im, 7, 0);
+
+        for (i = MINBAND; i < 64; i++) {
+          data[i] = sqrt(data[i] * data[i] + im[i] * im[i]);
+          min_data[i] += data[i];
+        }
+      }
+    }
+  }
+  for (i = MINBAND; i < 64; i++) {
+    min_data[i] /= 50;
+  }
+
 }
 
 void loop()
 {
- int static i = 0;
- static long tt;
- int val;
+  static int i = 0;
+  static long tt;
+  int val;
 
   if (millis() > tt)
   {
-     if (i < 128)
-     {
-       val = analogRead(0);
-       //Serial.println(val);
-       data[i] = val / 4 - 128;
-       im[i] = 0;
-       i++;
+    if (i < 128)
+    {
+      val = analogRead(0);
+      //Serial.println(val);
+      data[i] = val / 4 - 128;
+      im[i] = 0;
+      i++;
 
-     }
-     else
-     {
-       //this could be done with the fix_fftr function without the im array.
-       fix_fft(data, im, 7, 0);
+    }
+    else
+    {
+      //this could be done with the fix_fftr function without the im array.
+      fix_fft(data, im, 7, 0);
 
-       //Serial.print("[ ");
-       // I am only interessted in the absolute value of the transformation
-       uint16_t red = 0;
-       uint16_t green = 0;
-       uint16_t blue = 0;
-       for (i = 0; i < 64; i++)
-       {
-          data[i] = sqrt(data[i] * data[i] + im[i] * im[i]);
-          
-          if (i < 20){
-            red += data[i];
-          }
-          else if (i < 40){
-            green += data[i];
-          }
-          else if (i < 60){
-            blue += data[i];
-          }
-          //Serial.print((int8_t)data[i]);
-          //Serial.print(" ");
-       }
-       //uint16_t brightness = red / 3 + green / 3 + blue / 3;
+      //Serial.print("[ ");
+      // I am only interessted in the absolute value of the transformation
+      int16_t red = 0;
+      int16_t green = 0;
+      int16_t blue = 0;
+      int32_t sum = 0;
+      for (i = MINBAND; i < 64; i++)
+      {
+        data[i] = 5*floor(log(sqrt(data[i] * data[i] + im[i] * im[i]) - min_data[i])*LOG2INV);
+        //data[i] = sqrt(data[i] * data[i] + im[i] * im[i]) - min_data[i];
 
-       red /= 20;
-       green /= 20;
-       blue /= 20;
-       uint32_t color = strip.Color(red, green, blue);
-       //Serial.println("]");
+        if (i < 20){
+          red += data[i];
+        }
+        else if (i < 40){
+          green += data[i];
+        }
+        else if (i < 60){
+          blue += data[i];
+        }
+        sum += data[i];
+        Serial.print(i);
+        Serial.print(":");
+        Serial.println((uint8_t)data[i]);
 
-       //do something with the data values 1..64 and ignore im
-       setAllPixelsToColor(color);
-       //strip.setBrightness(brightness);
-       strip.show();
-     }
+      }
 
-     tt = millis();
+      uint32_t color = strip.Color(red, green, blue);
+
+      //do something with the data values 1..64 and ignore im
+      setAllPixelsToColor(color);
+      //strip.setBrightness(brightness);
+      strip.show();
+       //i = 0;
+    }
+
+    tt = millis();
   }
 }
 
