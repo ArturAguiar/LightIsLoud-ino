@@ -10,6 +10,10 @@ extern double bbTemp;
 
 const int SAMPLE_WINDOW = 30; // Sample window width in mS (50 mS = 20Hz)
 const int NUMBER_OF_LEDS = 60;
+const double LOG2INV = 1/log(2);
+
+static char im[128];
+static char data[128];
 
 // Parameter 1 = number of pixels in strip
 // Parameter 2 = Arduino pin number (most are valid)
@@ -20,61 +24,22 @@ const int NUMBER_OF_LEDS = 60;
 //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUMBER_OF_LEDS, PIN, NEO_GRB + NEO_KHZ800);
 
-const uint32_t BLACK = strip.Color(0, 0, 0);
-const double LOG2INV = 1/log(2);
-
-char im[128];
-char data[128];
-uint8_t min_data[64];
-
-
 void setup()
 {
-  Serial.begin(9600);
   strip.begin();
-  strip.setBrightness(10);
+  strip.setBrightness(30);
   strip.show(); // all pixels start off
-  int i = 0;
-  int j = 0;
-  int val;
-
-  for (; j < 50; ++j) {
-    for(; i < 129; ++i) {
-      if (i < 128) {
-        val = analogRead(0);
-        //Serial.println(val);
-        data[i] = val / 4 - 128;
-        im[i] = 0;
-        i++;
-
-      }
-      else {
-        fix_fft(data, im, 7, 0);
-
-        for (i = MINBAND; i < 64; i++) {
-          data[i] = sqrt(data[i] * data[i] + im[i] * im[i]);
-          min_data[i] += data[i];
-        }
-      }
-    }
-  }
-  for (i = MINBAND; i < 64; i++) {
-    min_data[i] /= 50;
-  }
-
 }
 
 void loop()
 {
 
-  unsigned long startMillis = millis();  // Start of sample window
-  unsigned int peakToPeak = 0;  // peak-to-peak level
+  static unsigned int peakToPeak;  // peak-to-peak level
+  static int sample;
+  static int i;
 
   unsigned int signalMax = 0;
   unsigned int signalMin = 1024;
-  int i;
-  int sample;
-
 
   for (i = 0; i < 128; ++i)
   {
@@ -90,7 +55,6 @@ void loop()
       {
         signalMin = sample;  // save just the min levels
       }
-      //Serial.println(val);
       data[i] = sample / 4 - 128;
       im[i] = 0;
     }
@@ -110,7 +74,14 @@ void loop()
 
 void setToSoundLevel(unsigned int peakToPeak, uint32_t color)
 {
-  int displayPeak = map(constrain(peakToPeak * 4, 0, 1023), 0, 1023, 0, NUMBER_OF_LEDS);
+  static int lastPeak = 0;
+  int displayPeak = map(constrain(peakToPeak, 0, 255), 0, 255, 0, NUMBER_OF_LEDS);
+  if (displayPeak <= lastPeak){
+    if (lastPeak >= 5){
+      displayPeak = lastPeak - 5;
+    }
+  }
+  lastPeak = displayPeak;
 
   for(int i = 0; i < NUMBER_OF_LEDS; i++)
   {
@@ -127,7 +98,7 @@ void setToSoundLevel(unsigned int peakToPeak, uint32_t color)
 
 double ampToTemp(unsigned int peakToPeak){
 
-  return map(constrain(peakToPeak, 0, 1024), 0, 1024, 1000, 15000);
+  return map(constrain(peakToPeak, 0, 255), 0, 255, 1000, 15000);
 
 }
 
@@ -135,26 +106,41 @@ double freqPeakToTemp(){
   //this could be done with the fix_fftr function without the im array.
   fix_fft(data, im, 7, 0);
 
-  //Serial.print("[ ");
   // I am only interessted in the absolute value of the transformation
   uint32_t num = 0;
   uint32_t den = 0;
   int i;
   for (i = MINBAND; i < 64; i++)
   {
-    data[i] = 5*log(sqrt(data[i] * data[i] + im[i] * im[i]) - min_data[i])*LOG2INV;
-    //data[i] = sqrt(data[i] * data[i] + im[i] * im[i]);// - min_data[i];
+    data[i] = log(sqrt(data[i] * data[i] + im[i] * im[i]))*LOG2INV;
     num += data[i]*i;
     den += data[i];
   }
   num /= den;
-  Serial.println(num);
 
   //do something with the data values 1..64
   return map(constrain(num, MINBAND, 64), MINBAND, 64, 1000, 15000);
 }
 
 uint32_t getColourFromTemp(double temp){
+
+  static int lastTemp = 0;
+  if (temp <= lastTemp){
+    if (lastTemp >= 500){
+      temp = lastTemp - 500;
+    }
+  }
+  else{
+    int diff = temp - lastTemp;
+    if (diff < 100){
+      temp = lastTemp + diff;
+    }
+    else{
+      temp = lastTemp + 100;
+    }
+  }
+  temp = constrain(temp, 1000, 15000);
+  lastTemp = temp;
 
   double x, y, z, r, g, b;
   static struct colourSystem *cs = &SMPTEsystem;
