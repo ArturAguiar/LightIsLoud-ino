@@ -1,7 +1,10 @@
 #include <Adafruit_NeoPixel.h>
 #include <avr/power.h>
+#include "specrend.h"
 
 #define PIN 6
+
+extern double bbTemp;
 
 const int SAMPLE_WINDOW = 30; // Sample window width in mS (50 mS = 20Hz)
 const int NUMBER_OF_LEDS = 60;
@@ -27,6 +30,7 @@ uint16_t stackRemaining = NUMBER_OF_LEDS;
 // on a live circuit...if you must, connect GND first.
 
 void setup() {
+  //Serial.begin(9600);
   strip.begin();
   strip.setBrightness(60);
   strip.show(); // Initialize all pixels to 'off'
@@ -71,10 +75,38 @@ void loop()
 
   //runTheCourseStack(strip.Color(34, 150, 72));
 
-  showSoundLevel(peakToPeak, strip.Color(34, 150, 72));
+  showSoundColour(peakToPeak);
+
+  //showSoundLevel(peakToPeak, strip.Color(34, 150, 72));
   //amplitudeToBrightness(peakToPeak, strip.Color(34, 150, 72));
   //showSoundLevel(peakToPeak, strip.Color(34, 150, 72));
   strip.show();
+}
+
+void showSoundColour(unsigned int peakToPeak){
+
+  double x, y, z, r, g, b;
+  static struct colourSystem *cs = &SMPTEsystem;
+  peakToPeak /= 2;
+  bbTemp = map(constrain(peakToPeak, 0, 1024), 0, 1024, 1000, 15000);
+  // Serial.print(peakToPeak);
+  // Serial.print(" ");
+  // Serial.println(bbTemp);
+
+  spectrum_to_xyz(bb_spectrum, &x, &y, &z);
+  xyz_to_rgb(cs, x, y, z, &r, &g, &b);
+  constrain_rgb(&r, &g, &b);
+  norm_rgb(&r, &g, &b);
+
+  uint32_t color = strip.Color(r*255, g*255, b*255);
+
+  for(int i = 0; i < NUMBER_OF_LEDS; i++)
+  {
+    strip.setPixelColor(i, color);
+  }
+
+  strip.show();              // Refresh LED states
+
 }
 
 void showSoundLevel(unsigned int peakToPeak, uint32_t color)
