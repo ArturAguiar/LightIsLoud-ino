@@ -77,10 +77,15 @@ void setToSoundLevel(unsigned int peakToPeak, uint32_t color)
   static int lastPeak = 0;
   int displayPeak = map(constrain(peakToPeak, 0, 255), 0, 255, 0, NUMBER_OF_LEDS);
   if (displayPeak <= lastPeak){
-    if (lastPeak >= 5){
-      displayPeak = lastPeak - 5;
+    int diff = lastPeak - displayPeak;
+    if (diff < 3){
+      displayPeak = lastPeak - 3;
+    }
+    else {
+      displayPeak = lastPeak - diff;
     }
   }
+  displayPeak = constrain(displayPeak, 0, 255);
   lastPeak = displayPeak;
 
   for(int i = 0; i < NUMBER_OF_LEDS; i++)
@@ -126,7 +131,11 @@ uint32_t getColourFromTemp(double temp){
 
   static int lastTemp = 0;
   if (temp <= lastTemp){
-    if (lastTemp >= 500){
+    int diff = lastTemp - temp;
+    if (diff < 500){
+      temp = lastTemp - diff;
+    }
+    else {
       temp = lastTemp - 500;
     }
   }
