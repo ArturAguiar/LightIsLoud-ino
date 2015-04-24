@@ -24,15 +24,13 @@ static char data[128];
 //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUMBER_OF_LEDS, PIN, NEO_GRB + NEO_KHZ800);
 
-void setup()
-{
+void setup() {
   strip.begin();
-  strip.setBrightness(30);
+  strip.setBrightness(10);
   strip.show(); // all pixels start off
 }
 
-void loop()
-{
+void loop() {
 
   static unsigned int peakToPeak;  // peak-to-peak level
   static int sample;
@@ -41,24 +39,21 @@ void loop()
   unsigned int signalMax = 0;
   unsigned int signalMin = 1024;
 
-  for (i = 0; i < 128; ++i)
-  {
+  for (i = 0; i < 128; ++i) { // toss out spurious readings
+
     sample = analogRead(0);
 
-    if (sample < 1024)  // toss out spurious readings
-    {
-      if (sample > signalMax)
-      {
+    if (sample < 1024) {
+      if (sample > signalMax) {
         signalMax = sample;  // save just the max levels
       }
-      else if (sample < signalMin)
-      {
+      else if (sample < signalMin) {
         signalMin = sample;  // save just the min levels
       }
       data[i] = sample / 4 - 128;
       im[i] = 0;
     }
-    else{
+    else {
       --i;
     }
   }
@@ -72,42 +67,34 @@ void loop()
   strip.show();
 }
 
-void setToSoundLevel(unsigned int peakToPeak, uint32_t color)
-{
+void setToSoundLevel(unsigned int peakToPeak, uint32_t color) {
+
   static int lastPeak = 0;
   int displayPeak = map(constrain(peakToPeak, 0, 255), 0, 255, 0, NUMBER_OF_LEDS);
-  if (displayPeak <= lastPeak){
-    int diff = lastPeak - displayPeak;
-    if (diff < 3){
+  if (displayPeak <= lastPeak) {
+    if (lastPeak >= displayPeak + 3){
       displayPeak = lastPeak - 3;
-    }
-    else {
-      displayPeak = lastPeak - diff;
     }
   }
   displayPeak = constrain(displayPeak, 0, 255);
   lastPeak = displayPeak;
 
-  for(int i = 0; i < NUMBER_OF_LEDS; i++)
-  {
-    if (i >= displayPeak)
-    {
+  for(int i = 0; i < NUMBER_OF_LEDS; i++) {
+    if (i >= displayPeak) {
       strip.setPixelColor(NUMBER_OF_LEDS - i - 1, 0);
     }
-    else
-    {
+    else {
       strip.setPixelColor(NUMBER_OF_LEDS - i - 1, color);
     }
   }
 }
 
-double ampToTemp(unsigned int peakToPeak){
+double ampToTemp(unsigned int peakToPeak) {
 
   return map(constrain(peakToPeak, 0, 255), 0, 255, 1000, 15000);
-
 }
 
-double freqPeakToTemp(){
+double freqPeakToTemp() {
   //this could be done with the fix_fftr function without the im array.
   fix_fft(data, im, 7, 0);
 
@@ -115,8 +102,7 @@ double freqPeakToTemp(){
   uint32_t num = 0;
   uint32_t den = 0;
   int i;
-  for (i = MINBAND; i < 64; i++)
-  {
+  for (i = MINBAND; i < 64; i++) {
     data[i] = log(sqrt(data[i] * data[i] + im[i] * im[i]))*LOG2INV;
     num += data[i]*i;
     den += data[i];
@@ -127,24 +113,16 @@ double freqPeakToTemp(){
   return map(constrain(num, MINBAND, 64), MINBAND, 64, 1000, 15000);
 }
 
-uint32_t getColourFromTemp(double temp){
+uint32_t getColourFromTemp(double temp) {
 
   static int lastTemp = 0;
-  if (temp <= lastTemp){
-    int diff = lastTemp - temp;
-    if (diff < 500){
-      temp = lastTemp - diff;
-    }
-    else {
+  if (temp <= lastTemp) {
+    if (lastTemp >= temp + 500) {
       temp = lastTemp - 500;
     }
   }
   else{
-    int diff = temp - lastTemp;
-    if (diff < 100){
-      temp = lastTemp + diff;
-    }
-    else{
+    if (temp >= lastTemp + 100) {
       temp = lastTemp + 100;
     }
   }
