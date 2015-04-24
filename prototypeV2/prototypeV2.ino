@@ -1,7 +1,7 @@
 #include <fix_fft.h>
 #include <Adafruit_NeoPixel.h>
 #include <avr/power.h>
-#include "specrend.h"
+#include <specrend.h>
 
 extern double bbTemp;
 
@@ -142,10 +142,9 @@ uint32_t getColourFromTemp(double temp) {
 
 }
 
-void setAllPixelsToColor(uint32_t color)
-{
-  for (int i = 0; i < NUMBER_OF_LEDS; i++)
-  {
+void setAllPixelsToColor(uint32_t color) {
+
+  for (int i = 0; i < NUMBER_OF_LEDS; i++) {
     strip.setPixelColor(i, color);
   }
 }
