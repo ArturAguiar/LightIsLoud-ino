@@ -1,13 +1,13 @@
 #include <Adafruit_NeoPixel.h>
 #include <avr/power.h>
-#include "specrend.h"
+#include <specrend.h>
 
 #define PIN 6
 
 extern double bbTemp;
 
 const int SAMPLE_WINDOW = 30; // Sample window width in mS (50 mS = 20Hz)
-const int NUMBER_OF_LEDS = 60;
+const int NUMBER_OF_LEDS = 90;
 
 // Parameter 1 = number of pixels in strip
 // Parameter 2 = Arduino pin number (most are valid)
@@ -73,9 +73,7 @@ void loop()
 
   //runTheCourse(peakToPeak, strip.Color(34, 150, 72));
 
-  //runTheCourseStack(strip.Color(34, 150, 72));
-
-  showSoundColour(peakToPeak);
+  runTheCourseStack(soundColour(peakToPeak));
 
   //showSoundLevel(peakToPeak, strip.Color(34, 150, 72));
   //amplitudeToBrightness(peakToPeak, strip.Color(34, 150, 72));
@@ -83,7 +81,7 @@ void loop()
   strip.show();
 }
 
-void showSoundColour(unsigned int peakToPeak){
+uint32_t soundColour(unsigned int peakToPeak){
 
   double x, y, z, r, g, b;
   static struct colourSystem *cs = &SMPTEsystem;
@@ -98,14 +96,7 @@ void showSoundColour(unsigned int peakToPeak){
   constrain_rgb(&r, &g, &b);
   norm_rgb(&r, &g, &b);
 
-  uint32_t color = strip.Color(r*255, g*255, b*255);
-
-  for(int i = 0; i < NUMBER_OF_LEDS; i++)
-  {
-    strip.setPixelColor(i, color);
-  }
-
-  strip.show();              // Refresh LED states
+  return strip.Color(r*255, g*255, b*255);
 
 }
 

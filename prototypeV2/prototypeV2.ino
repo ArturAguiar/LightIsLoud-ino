@@ -9,7 +9,7 @@ extern double bbTemp;
 #define MINBAND 1
 
 const int SAMPLE_WINDOW = 30; // Sample window width in mS (50 mS = 20Hz)
-const int NUMBER_OF_LEDS = 60;
+const int NUMBER_OF_LEDS = 90;
 const double LOG2INV = 1/log(2);
 
 static char im[128];
