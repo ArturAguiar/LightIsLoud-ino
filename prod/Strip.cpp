@@ -68,7 +68,7 @@ void Strip::runTheCourse(unsigned int peakToPeak, uint32_t color)
 
 void Strip::setPixelColor(uint16_t i, uint32_t colour){
   if(invert){
-    i = length-i;
+    i = length-i-1;
   }
   if (split){
     strip->setPixelColor(i, colour);
