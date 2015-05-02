@@ -14,14 +14,13 @@ void loop() {
 
   if(button1.uniquePress()){
     buttonPushCounter++;
-    Serial.print("count:  ");
-    Serial.println(buttonPushCounter);
+  }
+  else if(button2.uniquePress()){
+    buttonPushCounter+=2;
   }
 
-  if(button2.uniquePress()){
-    buttonPushCounter--;
-    Serial.print("count:  ");
-    Serial.println(buttonPushCounter);
-  }
-  
+  buttonPushCounter %= 3;
+
+  Serial.println(buttonPushCounter);
+
 }

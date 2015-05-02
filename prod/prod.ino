@@ -1,21 +1,20 @@
 #include <Adafruit_NeoPixel.h>
+#include <Button.h>
 #include <fix_fft.h>
 #include <specrend.h>
 #include "Strip.h"
 #include "SoundTemp.h"
 
-const int SAMPLE_WINDOW = 30; // Sample window width in mS (50 mS = 20Hz)
+const int SAMPLE_WINDOW = 50; // Sample window width in mS (50 mS = 20Hz)
 
-Strip left_leg = Strip(90, 4, false, false);
-Strip right_leg = Strip(90, 5, false, false);
+static Button buttonUp = Button(3);
+static Button buttonDown = Button(2);
 
-Strip left_torso = Strip(60, 6, true, false);
-Strip right_torso = Strip(60, 8, true, false);
+static Strip legs = Strip(90, 6, false);
+static Strip torso = Strip(60, 5, true);
+static Strip arms = Strip(60, 4, false);
 
-Strip left_arm = Strip(60, 7, false, true);
-Strip right_arm = Strip(60, 9, false, true);
-
-Strip strips[] = {left_leg, right_leg, left_torso, right_torso, left_arm, right_arm};
+static Strip strips[] = {legs, torso, arms};
 
 void setup(){}
 
@@ -25,7 +24,9 @@ void loop() {
   static int sample;
   static int i = 0;
   static int frame = 0;
-  static uint32_t colour = WHITE;
+  static uint32_t color = WHITE;
+  static int mode = 0;
+
   unsigned long startMillis = millis();  // Start of sample window
 
   unsigned int signalMax = 0;
@@ -52,7 +53,7 @@ void loop() {
     }
     else {
       if (frame++%4==3){
-        colour = getColourFromTemp(freqPeakToTemp());
+        color = getColourFromTemp(freqPeakToTemp());
         frame = 0;
       }
       i = 0;
@@ -60,19 +61,29 @@ void loop() {
   }
   peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
 
-  for (int j = 0; j < 6; ++j){
-    strips[j].setToSoundLevel(peakToPeak, colour);
-    //strips[j].runTheCourse(peakToPeak, colour);
-    strips[j].show();
+  if(buttonUp.uniquePress()){
+    ++mode;
+    mode %= 3;
   }
-
-  // left_torso.runTheCourse(peakToPeak, colour);
-  // left_torso.show();
-
-  //setAllPixelsToColor(getColourFromTemp(freqPeakToTemp()));
-  //setAllPixelsToColor(getColourFromTemp(ampToTemp(peakToPeak)));
-  //setToSoundLevel(peakToPeak, getColourFromTemp(freqPeakToTemp()));
-  //setToSoundLevel(peakToPeak, getColourFromTemp(ampToTemp(peakToPeak)));
-  //strip.setBrightness(map(constrain(peakToPeak, 0, 1023), 0, 1023, 0, 255));
-  //strip.show();
+  else if(buttonDown.uniquePress()){
+    mode += 2;
+    mode %= 3;
+  }
+  
+  switch (mode){
+    case 0:
+    for (int j = 0; j < 3; ++j){
+      strips[j].setToSoundLevel(peakToPeak, color, j == 2);
+    }
+    break;
+    case 1:
+    arms.runTheCourse(peakToPeak, color, false);
+    legs.runTheCourse(torso.runTheCourse(peakToPeak, color, true)==BLACK ? 0 : 255, color, false);
+    break;
+    default:
+    for (int j = 0; j < 3; ++j){
+      strips[j].clear();
+    }
+    break;
+  }
 }

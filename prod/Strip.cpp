@@ -1,10 +1,9 @@
 #include "Strip.h"
 
-Strip::Strip(uint16_t length, uint8_t pin, bool split, bool invert){
+Strip::Strip(uint16_t length, uint8_t pin, bool split){
   strip = new Adafruit_NeoPixel(length, pin);
   this->length = length/(split+1);
   this->split = split;
-  this->invert = invert;
   strip->begin();
   strip->setBrightness(10);
 }
@@ -13,11 +12,12 @@ Strip::Strip(uint16_t length, uint8_t pin, bool split, bool invert){
 void Strip::setAllPixelsToColor(uint32_t color) {
 
   for (int i = 0; i < length; i++) {
-    setPixelColor(i, color);
+    setPixelColor(i, color, false);
   }
+  show();
 }
 
-void Strip::setToSoundLevel(unsigned int peakToPeak, uint32_t color) {
+void Strip::setToSoundLevel(unsigned int peakToPeak, uint32_t color, bool invert) {
 
   static int lastPeak = 0;
   int displayPeak = map(constrain(peakToPeak, 0, 255), 0, 255, 0, length);
@@ -26,56 +26,66 @@ void Strip::setToSoundLevel(unsigned int peakToPeak, uint32_t color) {
       displayPeak = lastPeak - 3;
     }
   }
-  displayPeak = constrain(displayPeak, 0, 255);
+  displayPeak = constrain(displayPeak, 0, length);
   lastPeak = displayPeak;
 
-  for(int i = 0; i <= length; i++) {
+  for(int i = 0; i < length; ++i) {
     if (i >= displayPeak) {
-      setPixelColor(i, 0);
+      setPixelColor(i, BLACK, invert);
     }
     else {
-      setPixelColor(i, color);
+      setPixelColor(i, color, invert);
     }
   }
+  show();
 }
 
-void Strip::runTheCourse(unsigned int peakToPeak, uint32_t color)
+uint32_t Strip::runTheCourse(unsigned int peakToPeak, uint32_t color, bool invert)
 {
-  int displayPeak = map(constrain(peakToPeak * 4, 0, 1023), 0, 1023, 0, 100);
+  int displayPeak = map(constrain(peakToPeak, 0, 255), 0, 255, 0, 100);
 
-  if (displayPeak > 20)  {
-    setPixelColor(0, color);
+  if (displayPeak > 20) {
+    setPixelColor(0, color, invert);
     show();
   }
 
-  for(int16_t i = length+1; i >= 0; i--)  {
-    uint32_t thisColor = strip->getPixelColor(i);
+  uint32_t toReturn = getPixelColor(length-1, invert);
 
-    if (thisColor != BLACK)
-    {
-      //Serial.print("COLOR AT ");
-      //Serial.println(thisColor);
+  for(int16_t i = length-1; i >= 0; --i)  {
+    uint32_t thisColor = getPixelColor(i, invert);
 
-      setPixelColor(i, BLACK);
+    if (thisColor != BLACK) {
+      setPixelColor(i, BLACK, invert);
 
-      if (i + 1 < length)
-      {
-        setPixelColor(i + 1, color);
+      if (i + 1 < length) {
+        setPixelColor(i + 1, color, invert);
       }
     }
   }
+  show();
+  return toReturn;
 }
 
-void Strip::setPixelColor(uint16_t i, uint32_t colour){
-  if(invert){
+void Strip::setPixelColor(uint16_t i, uint32_t color, bool invert){
+
+  if(invert) {
     i = length-i-1;
   }
-  if (split){
-    strip->setPixelColor(i, colour);
-    strip->setPixelColor(2*length-i, colour);
 
+  if (split) {
+    strip->setPixelColor(i, color);
+    strip->setPixelColor(2*length-i-1, color);
   }
   else {
-    strip->setPixelColor(i, colour);
+    strip->setPixelColor(i, color);
   }
+}
+
+uint32_t Strip::getPixelColor(uint16_t i, bool invert){
+
+  if(invert) {
+    i = length-i-1;
+  }
+
+  return strip->getPixelColor(i);
 }
