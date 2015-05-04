@@ -66,6 +66,10 @@ uint32_t Strip::runTheCourse(unsigned int peakToPeak, uint32_t color, bool inver
   return toReturn;
 }
 
+void Strip::buildUp(unsigned int peakToPeak){
+  show();
+}
+
 void Strip::setPixelColor(uint16_t i, uint32_t color, bool invert){
 
   if(invert) {

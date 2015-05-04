@@ -7,8 +7,8 @@
 
 const int SAMPLE_WINDOW = 50; // Sample window width in mS (50 mS = 20Hz)
 
-static Button buttonUp = Button(3);
-static Button buttonDown = Button(2);
+static Button buttonUp = Button(2);
+static Button buttonDown = Button(3);
 
 static Strip legs = Strip(90, 6, false);
 static Strip torso = Strip(60, 5, true);
@@ -32,6 +32,15 @@ void loop() {
   unsigned int signalMax = 0;
   unsigned int signalMin = 1024;
 
+  if(buttonUp.uniquePress()){
+    ++mode;
+    mode %= 6;
+  }
+  else if(buttonDown.uniquePress()){
+    mode += 5;
+    mode %= 6;
+  }
+
   while(millis() - startMillis < SAMPLE_WINDOW){
     if (i < 128){
 
@@ -52,33 +61,37 @@ void loop() {
       ++i;
     }
     else {
-      if (frame++%4==3){
+      switch (mode){
+        case 3:
+        if (frame++%64==63){
+          color = getColourFromTemp(freqPeakToTemp());
+          frame = 0;
+
+        }
+        break;
+        case 5:
         color = getColourFromTemp(freqPeakToTemp());
-        frame = 0;
+        break;
       }
       i = 0;
     }
   }
   peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
 
-  if(buttonUp.uniquePress()){
-    ++mode;
-    mode %= 3;
-  }
-  else if(buttonDown.uniquePress()){
-    mode += 2;
-    mode %= 3;
-  }
-  
   switch (mode){
-    case 0:
+    case 1:
+    for (int j = 0; j < 3; ++j){
+      strips[j].buildUp(peakToPeak);
+    }
+    break;
+    case 3:
+    arms.runTheCourse(peakToPeak, color, false);
+    legs.runTheCourse(torso.runTheCourse(peakToPeak, color, true)==BLACK ? 0 : 255, color, false);
+    break;
+    case 5:
     for (int j = 0; j < 3; ++j){
       strips[j].setToSoundLevel(peakToPeak, color, j == 2);
     }
-    break;
-    case 1:
-    arms.runTheCourse(peakToPeak, color, false);
-    legs.runTheCourse(torso.runTheCourse(peakToPeak, color, true)==BLACK ? 0 : 255, color, false);
     break;
     default:
     for (int j = 0; j < 3; ++j){
