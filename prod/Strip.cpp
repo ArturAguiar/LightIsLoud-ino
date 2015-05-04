@@ -66,8 +66,33 @@ uint32_t Strip::runTheCourse(unsigned int peakToPeak, uint32_t color, bool inver
   return toReturn;
 }
 
-void Strip::buildUp(unsigned int peakToPeak){
+void Strip::buildUp(unsigned int peakToPeak, bool resetBrightness){
+  static float buildUpBrightness = 1.0f;
+  
+  if (resetBrightness)
+  {
+    buildUpBrightness = 1.0f;
+    return;
+  }
+  
+  if (buildUpBrightness > 255.0f)
+  {
+    strip->setBrightness(0);    
+  }
+  else
+  {  
+    int displayPeak = map(constrain(peakToPeak, 0, 255), 0, 255, 0, 100);
+  
+    if (displayPeak > 20) {
+      buildUpBrightness += 0.01f;
+    }
+    
+    strip->setBrightness(int(buildUpBrightness));
+  }
+  
   show();
+  
+  strip->setBrightness(10);
 }
 
 void Strip::setPixelColor(uint16_t i, uint32_t color, bool invert){

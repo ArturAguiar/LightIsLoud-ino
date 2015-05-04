@@ -32,11 +32,21 @@ void loop() {
   unsigned int signalMax = 0;
   unsigned int signalMin = 1024;
 
-  if(buttonUp.uniquePress()){
+  if(buttonUp.uniquePress()){    
+    if (mode == 1){
+      for (int j = 0; j < 3; ++j){
+        strips[j].buildUp(0, true);
+      }
+    }
     ++mode;
     mode %= 6;
   }
   else if(buttonDown.uniquePress()){
+    if (mode == 1){
+      for (int j = 0; j < 3; ++j){
+        strips[j].buildUp(0, true);
+      }
+    }
     mode += 5;
     mode %= 6;
   }
@@ -81,7 +91,7 @@ void loop() {
   switch (mode){
     case 1:
     for (int j = 0; j < 3; ++j){
-      strips[j].buildUp(peakToPeak);
+      strips[j].buildUp(peakToPeak, false);
     }
     break;
     case 3:
