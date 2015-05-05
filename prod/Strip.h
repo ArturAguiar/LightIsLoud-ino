@@ -19,7 +19,7 @@ public:
   void setAllPixelsToColor(uint32_t color);
   void setToSoundLevel(unsigned int peakToPeak, uint32_t color, bool invert);
   uint32_t runTheCourse(unsigned int peakToPeak, uint32_t color, bool invert);
-  void buildUp(unsigned int peakToPeak, bool resetBrightness);
+  float buildUp(unsigned int peakToPeak, uint32_t color, bool resetBrightness);
   void clear(){strip->clear(); show();}
 
 };

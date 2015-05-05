@@ -1,4 +1,5 @@
 #include "Strip.h"
+#include "SoundTemp.h"
 
 Strip::Strip(uint16_t length, uint8_t pin, bool split){
   strip = new Adafruit_NeoPixel(length, pin);
@@ -40,8 +41,7 @@ void Strip::setToSoundLevel(unsigned int peakToPeak, uint32_t color, bool invert
   show();
 }
 
-uint32_t Strip::runTheCourse(unsigned int peakToPeak, uint32_t color, bool invert)
-{
+uint32_t Strip::runTheCourse(unsigned int peakToPeak, uint32_t color, bool invert){
   int displayPeak = map(constrain(peakToPeak, 0, 255), 0, 255, 0, 100);
 
   if (displayPeak > 20) {
@@ -66,33 +66,32 @@ uint32_t Strip::runTheCourse(unsigned int peakToPeak, uint32_t color, bool inver
   return toReturn;
 }
 
-void Strip::buildUp(unsigned int peakToPeak, bool resetBrightness){
+float Strip::buildUp(unsigned int peakToPeak, uint32_t color, bool resetBrightness) {
   static float buildUpBrightness = 1.0f;
-  
-  if (resetBrightness)
-  {
+
+  if (resetBrightness) {
     buildUpBrightness = 1.0f;
-    return;
+    strip->setBrightness(1);
+    //setAllPixelsToColor(WHITE);
+    show();
+    strip->setBrightness(10);
+    return 0;
   }
-  
-  if (buildUpBrightness > 255.0f)
-  {
-    strip->setBrightness(0);    
-  }
-  else
-  {  
+
+  if (buildUpBrightness < 20) {
     int displayPeak = map(constrain(peakToPeak, 0, 255), 0, 255, 0, 100);
-  
+
     if (displayPeak > 20) {
-      buildUpBrightness += 0.01f;
+      buildUpBrightness += 0.1f;
     }
-    
-    strip->setBrightness(int(buildUpBrightness));
+    setAllPixelsToColor(color);
+    strip->setBrightness((int)buildUpBrightness);
+
+    show();
+
+    strip->setBrightness(10);
   }
-  
-  show();
-  
-  strip->setBrightness(10);
+  return buildUpBrightness;
 }
 
 void Strip::setPixelColor(uint16_t i, uint32_t color, bool invert){

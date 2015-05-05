@@ -22,33 +22,34 @@ void loop() {
 
   static unsigned int peakToPeak;  // peak-to-peak level
   static int sample;
-  static int i = 0;
-  static int frame = 0;
+  static int i;
+  static int frame;
   static uint32_t color = WHITE;
-  static int mode = 0;
+  static int mode;
+  static float buildUpBrightness;
 
   unsigned long startMillis = millis();  // Start of sample window
 
   unsigned int signalMax = 0;
   unsigned int signalMin = 1024;
 
-  if(buttonUp.uniquePress()){    
-    if (mode == 1){
-      for (int j = 0; j < 3; ++j){
-        strips[j].buildUp(0, true);
-      }
-    }
+  if(buttonUp.uniquePress()){
     ++mode;
     mode %= 6;
-  }
-  else if(buttonDown.uniquePress()){
     if (mode == 1){
       for (int j = 0; j < 3; ++j){
-        strips[j].buildUp(0, true);
+        strips[j].buildUp(0, 0, true);
       }
     }
+  }
+  else if(buttonDown.uniquePress()){
     mode += 5;
     mode %= 6;
+    if (mode == 1){
+      for (int j = 0; j < 3; ++j){
+        strips[j].buildUp(0, 0, true);
+      }
+    }
   }
 
   while(millis() - startMillis < SAMPLE_WINDOW){
@@ -86,12 +87,17 @@ void loop() {
       i = 0;
     }
   }
+
+  if (mode == 1){
+      color = getColourFromTemp(map(buildUpBrightness, 1, 20, 1000, 15000));
+  }
+
   peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
 
   switch (mode){
     case 1:
     for (int j = 0; j < 3; ++j){
-      strips[j].buildUp(peakToPeak, false);
+      buildUpBrightness = strips[j].buildUp(peakToPeak, color, false);
     }
     break;
     case 3:
