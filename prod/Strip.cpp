@@ -20,15 +20,16 @@ void Strip::setAllPixelsToColor(uint32_t color) {
 
 void Strip::setToSoundLevel(unsigned int peakToPeak, uint32_t color, bool invert) {
 
+
   static int lastPeak = 0;
-  int displayPeak = map(constrain(peakToPeak, 0, 255), 0, 255, 0, length);
+  int displayPeak = map(constrain(peakToPeak, 0, 255), 0, 255, 0, 100);
   if (displayPeak <= lastPeak) {
     if (lastPeak >= displayPeak + 3){
       displayPeak = lastPeak - 3;
     }
   }
-  displayPeak = constrain(displayPeak, 0, length);
   lastPeak = displayPeak;
+  displayPeak = map(constrain(displayPeak, 0, 100), 0, 100, 0, length);
 
   for(int i = 0; i < length; ++i) {
     if (i >= displayPeak) {

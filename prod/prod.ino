@@ -7,8 +7,8 @@
 
 const int SAMPLE_WINDOW = 50; // Sample window width in mS (50 mS = 20Hz)
 
-static Button buttonUp = Button(2);
-static Button buttonDown = Button(3);
+static Button buttonUp = Button(3);
+static Button buttonDown = Button(2);
 
 static Strip legs = Strip(90, 6, false);
 static Strip torso = Strip(60, 5, true);
